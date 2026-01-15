@@ -677,6 +677,13 @@ function addMessage(content, type = 'system', options = {}) {
 function processMessage(message) {
     const lowerMessage = message.toLowerCase();
     
+    // 首先检查是否为模糊描述，需要反问确认
+    const clarification = checkAmbiguousDescription(message);
+    if (clarification.needClarification) {
+        askForClarification(clarification);
+        return;
+    }
+    
     // 根据消息内容判断处理方式
     if (lowerMessage.includes('查询') || lowerMessage.includes('提取') || lowerMessage.includes('数据')) {
         handleDataQuery(message);
@@ -691,6 +698,175 @@ function processMessage(message) {
         addMessage('<p>我已经理解您的需求。让我为您分析...</p>');
         scrollToBottom();
     }
+}
+
+/**
+ * 检查是否为模糊描述
+ */
+function checkAmbiguousDescription(message) {
+    const lowerMessage = message.toLowerCase();
+    const ambiguousPatterns = [
+        {
+            keywords: ['坏', '坏客户', '坏账', '高风险', '风险客户', '问题客户'],
+            type: 'bad_customer',
+            questions: [
+                '请确认"坏客户"的定义标准：',
+                '1. 逾期天数超过多少天？（例如：7天、30天、90天）',
+                '2. 是否包括历史逾期记录？',
+                '3. 是否包括当前逾期状态？'
+            ],
+            suggestions: [
+                '逾期超过7天的用户',
+                '逾期超过30天的用户',
+                '有历史逾期记录的用户',
+                '当前逾期且逾期天数>7的用户'
+            ]
+        },
+        {
+            keywords: ['好', '好客户', '优质', '优质客户', '正常客户'],
+            type: 'good_customer',
+            questions: [
+                '请确认"优质客户"的定义标准：',
+                '1. 无逾期记录的时间要求？（例如：近6个月、近1年）',
+                '2. 是否需要考虑借款次数？',
+                '3. 是否需要考虑还款及时性？'
+            ],
+            suggestions: [
+                '近6个月无逾期的用户',
+                '近1年无逾期且借款次数>=3的用户',
+                '历史无逾期且还款及时率>95%的用户'
+            ]
+        },
+        {
+            keywords: ['年轻', '年轻人', '年轻用户'],
+            type: 'age_range',
+            questions: [
+                '请确认"年轻用户"的年龄范围：',
+                '1. 年龄上限是多少？（例如：25岁、30岁、35岁）',
+                '2. 是否包括下限？（例如：18岁以上）'
+            ],
+            suggestions: [
+                '年龄在18-25岁的用户',
+                '年龄在18-30岁的用户',
+                '年龄小于25岁的用户'
+            ]
+        },
+        {
+            keywords: ['新', '新用户', '新客户'],
+            type: 'new_user',
+            questions: [
+                '请确认"新用户"的定义标准：',
+                '1. 入网时长不超过多少个月？（例如：3个月、6个月、12个月）',
+                '2. 是否包括首次借款的用户？'
+            ],
+            suggestions: [
+                '入网时长小于3个月的用户',
+                '入网时长小于6个月的用户',
+                '首次借款的用户'
+            ]
+        },
+        {
+            keywords: ['查一下', '看看', '分析一下', '帮我看看'],
+            type: 'vague_query',
+            questions: [
+                '您的查询需求不够明确，请提供更多信息：',
+                '1. 要查询什么数据？（例如：逾期用户、借款记录、用户特征）',
+                '2. 时间范围是什么？（例如：最近30天、最近3个月）',
+                '3. 分析目标是什么？（例如：风险特征、用户画像）'
+            ],
+            suggestions: [
+                '查询近30天内逾期超过7天的用户',
+                '分析高风险客群的特征分布',
+                '查看最近3个月的借款记录'
+            ]
+        }
+    ];
+    
+    for (const pattern of ambiguousPatterns) {
+        if (pattern.keywords.some(keyword => lowerMessage.includes(keyword))) {
+            // 检查是否已经包含具体条件（避免误判）
+            const hasSpecificCondition = 
+                /\d+/.test(message) || // 包含数字
+                lowerMessage.includes('超过') || 
+                lowerMessage.includes('大于') || 
+                lowerMessage.includes('小于') ||
+                lowerMessage.includes('之间') ||
+                lowerMessage.includes('天') ||
+                lowerMessage.includes('月') ||
+                lowerMessage.includes('年');
+            
+            if (!hasSpecificCondition) {
+                return {
+                    needClarification: true,
+                    type: pattern.type,
+                    questions: pattern.questions,
+                    suggestions: pattern.suggestions,
+                    originalMessage: message
+                };
+            }
+        }
+    }
+    
+    return { needClarification: false };
+}
+
+/**
+ * 反问确认
+ */
+function askForClarification(clarification) {
+    const clarificationId = 'clarification-' + Date.now();
+    
+    addMessage(`
+        <div class="ai-message-card warning" id="${clarificationId}">
+            <p>❓ <strong>需要确认信息</strong></p>
+            <p>您的描述可能不够明确，为了准确理解您的需求，请确认以下问题：</p>
+            <div style="background: rgba(245, 158, 11, 0.1); padding: 16px; border-radius: 8px; margin: 12px 0; border-left: 3px solid #f59e0b;">
+                ${clarification.questions.map(q => `<p style="margin-bottom: 8px;">${q}</p>`).join('')}
+            </div>
+            <p style="margin-top: 12px;"><strong>💡 快速选择（点击使用）：</strong></p>
+            <div class="clarification-suggestions">
+                ${clarification.suggestions.map((suggestion, index) => `
+                    <button class="suggestion-btn clarification-btn" onclick="useClarification('${escapeHtml(suggestion)}', '${clarificationId}')">
+                        ${suggestion}
+                    </button>
+                `).join('')}
+            </div>
+            <p style="margin-top: 12px; font-size: 12px; color: var(--text-tertiary);">
+                或者您可以直接回复更详细的描述，我会根据您的回复重新理解需求。
+            </p>
+        </div>
+    `);
+    scrollToBottom();
+    
+    // 保存澄清上下文
+    state.pendingClarification = {
+        id: clarificationId,
+        type: clarification.type,
+        originalMessage: clarification.originalMessage
+    };
+}
+
+/**
+ * 使用澄清建议
+ */
+function useClarification(suggestion, clarificationId) {
+    // 移除澄清消息
+    const clarificationEl = document.getElementById(clarificationId);
+    if (clarificationEl) {
+        clarificationEl.style.opacity = '0.5';
+        clarificationEl.style.pointerEvents = 'none';
+    }
+    
+    // 添加用户确认消息
+    addMessage(`<p>✅ 已确认：${suggestion}</p>`, 'user');
+    
+    // 清除待澄清状态
+    delete state.pendingClarification;
+    
+    // 使用澄清后的描述重新处理
+    setTimeout(() => {
+        processMessage(suggestion);
+    }, 500);
 }
 
 /**
@@ -978,7 +1154,32 @@ function showCodeView(code, stats) {
  * 显示图表视图
  */
 function showChartView(type, title, labels, data) {
+    // 如果是分箱图表，使用交互式分箱
+    if (type === 'binning') {
+        showInteractiveBinningChart(title, labels, data);
+        return;
+    }
+    
     switchCanvasView('chart');
+    
+    // 恢复显示chart-stats和chart-header（如果不是分箱视图）
+    const chartContainer = document.querySelector('.chart-container');
+    if (chartContainer) {
+        chartContainer.classList.remove('binning-mode');
+        const chartStats = chartContainer.querySelector('.chart-stats');
+        if (chartStats) {
+            chartStats.style.display = '';
+        }
+        const chartHeader = chartContainer.querySelector('.chart-header');
+        if (chartHeader) {
+            chartHeader.style.display = '';
+        }
+        // 移除binning-wrapper类
+        const canvasWrapper = chartContainer.querySelector('.chart-canvas-wrapper');
+        if (canvasWrapper) {
+            canvasWrapper.classList.remove('binning-wrapper');
+        }
+    }
     
     // 更新标题
     const chartTitle = document.getElementById('chartTitle');
@@ -995,11 +1196,11 @@ function showChartView(type, title, labels, data) {
     const ctx = document.getElementById('mainChart');
     if (ctx) {
         const chartConfig = {
-            type: type === 'binning' ? 'bar' : type,
+            type: type,
             data: {
                 labels: labels,
                 datasets: [{
-                    label: type === 'binning' ? 'IV值' : '逾期率',
+                    label: '逾期率',
                     data: data,
                     backgroundColor: createGradient(ctx),
                     borderColor: '#667eea',
@@ -1056,13 +1257,6 @@ function showChartView(type, title, labels, data) {
         };
         
         state.chart = new Chart(ctx, chartConfig);
-    }
-    
-    // 更新IV/KS/Gini值
-    if (type === 'binning') {
-        document.getElementById('ivValue').textContent = '0.412';
-        document.getElementById('ksValue').textContent = '0.389';
-        document.getElementById('giniValue').textContent = '0.478';
     }
 }
 
@@ -1841,4 +2035,711 @@ function generateSQLFromConditions(conditions) {
 FROM user_credit_table
 WHERE ${whereClauses.join('\n  AND ')}
 ORDER BY create_time DESC`;
+}
+
+/**
+ * 显示交互式分箱图表（支持拖拽调整切分点）
+ */
+function showInteractiveBinningChart(title, labels, data) {
+    // 确保视图已切换
+    switchCanvasView('chart');
+    
+    // 初始化分箱数据
+    const binningData = {
+        feature: '年龄',
+        bins: [], // 将在recalculateBinning中生成
+        cutPoints: [18, 25, 30, 35, 40, 50, 70] // 切分点
+    };
+    
+    // 保存到state
+    state.binningData = binningData;
+    
+    // 初始化时先计算一次数据
+    // 定义临时函数用于初始化
+    function initRecalculateBinning(data) {
+        const newBins = [];
+        for (let i = 0; i < data.cutPoints.length - 1; i++) {
+            const min = data.cutPoints[i];
+            const max = data.cutPoints[i + 1];
+            
+            // 模拟坏账率：年龄越大，坏账率越低（单调递减）
+            const normalizedAge = (min + max) / 2;
+            const baseBadRate = Math.max(0.03, 0.18 - (normalizedAge - 20) * 0.003);
+            const badRate = Math.max(0.02, Math.min(0.20, baseBadRate + (Math.random() - 0.5) * 0.01));
+            
+            // 模拟样本占比
+            const centerAge = (data.cutPoints[0] + data.cutPoints[data.cutPoints.length - 1]) / 2;
+            const distanceFromCenter = Math.abs((min + max) / 2 - centerAge);
+            const maxDistance = Math.abs(data.cutPoints[data.cutPoints.length - 1] - data.cutPoints[0]) / 2;
+            const sampleRate = Math.max(0.05, 0.25 - (distanceFromCenter / maxDistance) * 0.15);
+            
+            newBins.push({
+                label: `${min}-${max}`,
+                min: min,
+                max: max,
+                badRate: badRate,
+                sampleRate: sampleRate,
+                goodRate: 1 - badRate,
+                goodCount: sampleRate * 10000 * (1 - badRate),
+                badCount: sampleRate * 10000 * badRate
+            });
+        }
+        
+        // 计算总体好坏客户数
+        const totalGood = newBins.reduce((sum, bin) => sum + bin.goodCount, 0);
+        const totalBad = newBins.reduce((sum, bin) => sum + bin.badCount, 0);
+        
+        // 计算WOE和IV
+        newBins.forEach(bin => {
+            const goodRatio = bin.goodCount / (bin.badCount || 0.0001);
+            const totalGoodRatio = totalGood / (totalBad || 0.0001);
+            bin.woe = Math.log(goodRatio / totalGoodRatio);
+            
+            const goodDist = bin.goodCount / (totalGood || 0.0001);
+            const badDist = bin.badCount / (totalBad || 0.0001);
+            bin.ivContribution = (goodDist - badDist) * bin.woe;
+        });
+        
+        data.bins = newBins;
+    }
+    
+    // 初始化计算
+    initRecalculateBinning(binningData);
+    
+    // 等待DOM更新后再获取元素
+    setTimeout(() => {
+        // 先尝试获取chartView
+        const chartView = document.getElementById('chartView');
+        if (!chartView) {
+            console.error('chartView not found');
+            return;
+        }
+        
+        // 确保chartView可见
+        chartView.classList.add('active');
+        
+        // 获取chart-container和chart-canvas-wrapper
+        const chartContainer = chartView.querySelector('.chart-container');
+        const canvasWrapper = chartView.querySelector('.chart-canvas-wrapper');
+        
+        if (!canvasWrapper) {
+            console.error('chart-canvas-wrapper not found');
+            // 如果找不到，尝试直接创建
+            if (chartContainer) {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'chart-canvas-wrapper binning-wrapper';
+                chartContainer.appendChild(wrapper);
+                // 添加binning-mode类到chart-container
+                chartContainer.classList.add('binning-mode');
+                renderBinningContent(wrapper, binningData);
+                return;
+            }
+            return;
+        }
+        
+        // 添加binning-wrapper类
+        canvasWrapper.classList.add('binning-wrapper');
+        // 添加binning-mode类到chart-container
+        if (chartContainer) {
+            chartContainer.classList.add('binning-mode');
+            // 隐藏原来的chart-stats（IV值、KS值、Gini系数）
+            const chartStats = chartContainer.querySelector('.chart-stats');
+            if (chartStats) {
+                chartStats.style.display = 'none';
+            }
+            // 隐藏chart-header（因为交互式分箱有自己的控制面板）
+            const chartHeader = chartContainer.querySelector('.chart-header');
+            if (chartHeader) {
+                chartHeader.style.display = 'none';
+            }
+        }
+        
+        // 渲染分箱内容
+        renderBinningContent(canvasWrapper, binningData);
+    }, 100);
+}
+
+/**
+ * 渲染分箱内容
+ */
+function renderBinningContent(container, binningData) {
+    // 创建交互式分箱图表HTML
+    container.innerHTML = `
+        <div class="interactive-binning-container">
+            <div class="binning-controls">
+                <div class="control-group">
+                    <label>特征名称：</label>
+                    <select id="binningFeature" onchange="changeBinningFeature(this.value)">
+                        <option value="age">年龄</option>
+                        <option value="income">月收入</option>
+                        <option value="entry_months">入网时长</option>
+                        <option value="loan_amount">借款金额</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label>分箱算法：</label>
+                    <select id="binningAlgorithm" onchange="changeBinningAlgorithm(this.value)">
+                        <option value="chi2">卡方分箱</option>
+                        <option value="tree">决策树分箱</option>
+                        <option value="manual">手动调整</option>
+                    </select>
+                </div>
+                <button class="btn-secondary btn-small" onclick="resetBinning()">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M12 7C12 9.76142 9.76142 12 7 12C4.23858 12 2 9.76142 2 7C2 4.23858 4.23858 2 7 2C8.8 2 10.4 3 11.2 4.5M11.2 4.5V2M11.2 4.5H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    重置
+                </button>
+                <button class="btn-primary btn-small" onclick="applyBinning()">
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M2 7L5 10L12 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    应用分箱
+                </button>
+            </div>
+            
+            <div class="binning-chart-area" id="binningChartArea">
+                <div class="binning-chart-wrapper">
+                    <canvas id="binningCanvas" width="800" height="400"></canvas>
+                    <div class="binning-handles" id="binningHandles"></div>
+                </div>
+            </div>
+            
+            <div class="binning-stats" id="binningStats">
+                <!-- 实时统计信息将在这里显示 -->
+            </div>
+            
+            <div class="binning-table" id="binningTable">
+                <!-- 分箱详情表格将在这里显示 -->
+            </div>
+        </div>
+    `;
+    
+    // 初始化交互式分箱图表
+    setTimeout(() => {
+        initInteractiveBinning(binningData);
+    }, 100);
+}
+
+/**
+ * 初始化交互式分箱图表
+ */
+function initInteractiveBinning(data) {
+    const canvas = document.getElementById('binningCanvas');
+    const handlesContainer = document.getElementById('binningHandles');
+    if (!canvas || !handlesContainer) return;
+    
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    const padding = { top: 40, right: 40, bottom: 60, left: 80 };
+    const chartWidth = width - padding.left - padding.right;
+    const chartHeight = height - padding.top - padding.bottom;
+    
+    // 计算切分点位置
+    const minValue = Math.min(...data.cutPoints);
+    const maxValue = Math.max(...data.cutPoints);
+    const valueRange = maxValue - minValue;
+    
+    // 绘制图表
+    function drawChart() {
+        // 清空画布
+        ctx.clearRect(0, 0, width, height);
+        
+        // 绘制背景
+        ctx.fillStyle = '#1a1f3a';
+        ctx.fillRect(0, 0, width, height);
+        
+        // 绘制网格线
+        ctx.strokeStyle = '#2d3557';
+        ctx.lineWidth = 1;
+        for (let i = 0; i <= 5; i++) {
+            const y = padding.top + (chartHeight / 5) * i;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, y);
+            ctx.lineTo(padding.left + chartWidth, y);
+            ctx.stroke();
+        }
+        
+        // 绘制Y轴标签
+        ctx.fillStyle = '#a8b2d1';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'right';
+        for (let i = 0; i <= 5; i++) {
+            const y = padding.top + (chartHeight / 5) * i;
+            const value = (5 - i) * 20; // 0-100%
+            ctx.fillText(value + '%', padding.left - 10, y + 4);
+        }
+        
+        // 绘制分箱柱状图
+        data.bins.forEach((bin, index) => {
+            const binWidth = chartWidth / data.bins.length;
+            const x = padding.left + binWidth * index;
+            const barHeight = (bin.badRate * 100 / 20) * (chartHeight / 5); // 归一化到0-100%
+            const y = padding.top + chartHeight - barHeight;
+            
+            // 绘制柱状图
+            const gradient = ctx.createLinearGradient(x, y, x, padding.top + chartHeight);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(x + 10, y, binWidth - 20, barHeight);
+            
+            // 绘制边框
+            ctx.strokeStyle = '#667eea';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 10, y, binWidth - 20, barHeight);
+            
+            // 绘制标签
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(bin.label, x + binWidth / 2, padding.top + chartHeight + 20);
+            
+            // 绘制坏账率标签
+            ctx.fillStyle = '#a8b2d1';
+            ctx.font = '10px sans-serif';
+            ctx.fillText((bin.badRate * 100).toFixed(1) + '%', x + binWidth / 2, y - 5);
+        });
+        
+        // 绘制X轴
+        ctx.strokeStyle = '#667eea';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, padding.top + chartHeight);
+        ctx.lineTo(padding.left + chartWidth, padding.top + chartHeight);
+        ctx.stroke();
+        
+        // 绘制Y轴
+        ctx.beginPath();
+        ctx.moveTo(padding.left, padding.top);
+        ctx.lineTo(padding.left, padding.top + chartHeight);
+        ctx.stroke();
+        
+        // 绘制Y轴标签
+        ctx.fillStyle = '#a8b2d1';
+        ctx.font = '12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.save();
+        ctx.translate(20, padding.top + chartHeight / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('坏账率', 0, 0);
+        ctx.restore();
+    }
+    
+    // 创建拖拽手柄
+    function createHandles() {
+        handlesContainer.innerHTML = '';
+        const binWidth = chartWidth / data.bins.length;
+        
+        // 为每个切分点创建手柄（除了第一个和最后一个）
+        for (let i = 1; i < data.cutPoints.length - 1; i++) {
+            const handle = document.createElement('div');
+            handle.className = 'binning-handle';
+            const handleX = padding.left + binWidth * i - 8;
+            const handleY = padding.top + chartHeight / 2 - 8;
+            handle.style.left = handleX + 'px';
+            handle.style.top = handleY + 'px';
+            handle.style.position = 'absolute';
+            handle.dataset.index = i;
+            handle.title = `切分点: ${data.cutPoints[i]}（拖拽调整）`;
+            
+            // 拖拽事件
+            let isDragging = false;
+            let startX = 0;
+            let startLeft = 0;
+            
+            handle.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                startLeft = parseFloat(handle.style.left);
+                handle.style.cursor = 'grabbing';
+                handle.style.zIndex = '1000';
+                e.preventDefault();
+                e.stopPropagation();
+            });
+            
+            const handleMouseMove = (e) => {
+                if (!isDragging) return;
+                
+                const deltaX = e.clientX - startX;
+                const containerRect = handlesContainer.getBoundingClientRect();
+                const newLeft = startLeft + deltaX;
+                
+                // 限制在合理范围内
+                const minX = padding.left + binWidth * 0.5;
+                const maxX = padding.left + chartWidth - binWidth * 0.5;
+                
+                if (newLeft >= minX && newLeft <= maxX) {
+                    handle.style.left = newLeft + 'px';
+                    
+                    // 计算新的切分点值
+                    const ratio = (newLeft - padding.left) / chartWidth;
+                    const newValue = Math.round(minValue + ratio * valueRange);
+                    
+                    // 更新切分点
+                    data.cutPoints[i] = newValue;
+                    handle.title = `切分点: ${newValue}（拖拽调整）`;
+                    
+                    // 实时重算分箱数据
+                    recalculateBinning(data);
+                    drawChart();
+                    // 重新创建手柄以更新位置
+                    createHandles();
+                    updateBinningStats(data);
+                    updateBinningTable(data);
+                }
+            };
+            
+            const handleMouseUp = () => {
+                if (isDragging) {
+                    isDragging = false;
+                    handle.style.cursor = 'grab';
+                    handle.style.zIndex = '1';
+                }
+            };
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+            
+            handlesContainer.appendChild(handle);
+        }
+    }
+    
+    // 重算分箱数据
+    function recalculateBinning(data) {
+        // 重新生成bins数组
+        const newBins = [];
+        for (let i = 0; i < data.cutPoints.length - 1; i++) {
+            const min = data.cutPoints[i];
+            const max = data.cutPoints[i + 1];
+            
+            // 模拟计算（实际应该调用后端API）
+            // 模拟坏账率：年龄越大，坏账率越低（单调递减）
+            const normalizedAge = (min + max) / 2;
+            const baseBadRate = Math.max(0.03, 0.18 - (normalizedAge - 20) * 0.003);
+            const badRate = Math.max(0.02, Math.min(0.20, baseBadRate + (Math.random() - 0.5) * 0.01));
+            
+            // 模拟样本占比：中间年龄段样本更多
+            const centerAge = (data.cutPoints[0] + data.cutPoints[data.cutPoints.length - 1]) / 2;
+            const distanceFromCenter = Math.abs((min + max) / 2 - centerAge);
+            const maxDistance = Math.abs(data.cutPoints[data.cutPoints.length - 1] - data.cutPoints[0]) / 2;
+            const sampleRate = Math.max(0.05, 0.25 - (distanceFromCenter / maxDistance) * 0.15);
+            
+            newBins.push({
+                label: `${min}-${max}`,
+                min: min,
+                max: max,
+                badRate: badRate,
+                sampleRate: sampleRate,
+                goodRate: 1 - badRate,
+                goodCount: sampleRate * 10000 * (1 - badRate), // 模拟好客户数
+                badCount: sampleRate * 10000 * badRate // 模拟坏客户数
+            });
+        }
+        
+        // 计算总体好坏客户数
+        const totalGood = newBins.reduce((sum, bin) => sum + bin.goodCount, 0);
+        const totalBad = newBins.reduce((sum, bin) => sum + bin.badCount, 0);
+        const totalGoodRate = totalGood / (totalGood + totalBad);
+        const totalBadRate = totalBad / (totalGood + totalBad);
+        
+        // 计算WOE和IV
+        newBins.forEach(bin => {
+            // WOE = ln((Good_i/Good_total) / (Bad_i/Bad_total))
+            // 简化：WOE = ln((Good_i/Bad_i) / (Good_total/Bad_total))
+            const goodRatio = bin.goodCount / (bin.badCount || 0.0001); // 避免除零
+            const totalGoodRatio = totalGood / (totalBad || 0.0001);
+            bin.woe = Math.log(goodRatio / totalGoodRatio);
+            
+            // IV = Σ((Good_i/Good_total - Bad_i/Bad_total) * WOE_i)
+            const goodDist = bin.goodCount / (totalGood || 0.0001);
+            const badDist = bin.badCount / (totalBad || 0.0001);
+            bin.ivContribution = (goodDist - badDist) * bin.woe;
+        });
+        
+        // 更新data.bins
+        data.bins = newBins;
+    }
+    
+    // 更新统计信息
+    function updateBinningStats(data) {
+        const statsEl = document.getElementById('binningStats');
+        if (!statsEl) return;
+        
+        // IV值 = Σ((Good_i/Good_total - Bad_i/Bad_total) * WOE_i)
+        const totalIV = data.bins.reduce((sum, bin) => sum + (bin.ivContribution || 0), 0);
+        
+        // 加权平均坏账率
+        const totalSample = data.bins.reduce((sum, bin) => sum + bin.sampleRate, 0);
+        const avgBadRate = totalSample > 0 ? 
+            data.bins.reduce((sum, bin) => sum + bin.badRate * bin.sampleRate, 0) / totalSample : 0;
+        
+        // IV值评级
+        let ivRating = '';
+        let ivColor = '';
+        if (totalIV < 0.02) {
+            ivRating = '无预测能力';
+            ivColor = 'text-danger';
+        } else if (totalIV < 0.1) {
+            ivRating = '较弱';
+            ivColor = 'text-warning';
+        } else if (totalIV < 0.3) {
+            ivRating = '中等';
+            ivColor = 'text-success';
+        } else {
+            ivRating = '较强';
+            ivColor = 'text-success';
+        }
+        
+        statsEl.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-label">总IV值</div>
+                    <div class="stat-value ${ivColor}">${totalIV.toFixed(4)}</div>
+                    <div class="stat-desc" style="font-size: 11px; color: var(--text-tertiary); margin-top: 4px;">
+                        ${ivRating}
+                    </div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">平均坏账率</div>
+                    <div class="stat-value">${(avgBadRate * 100).toFixed(2)}%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">分箱数量</div>
+                    <div class="stat-value">${data.bins.length}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">单调性</div>
+                    <div class="stat-value ${checkBinningMonotonicity(data) ? 'text-success' : 'text-warning'}">
+                        ${checkBinningMonotonicity(data) ? '✓ 单调' : '⚠ 非单调'}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // 检查单调性
+    function checkBinningMonotonicity(data) {
+        const badRates = data.bins.map(bin => bin.badRate);
+        // 检查是否单调递减
+        for (let i = 1; i < badRates.length; i++) {
+            if (badRates[i] > badRates[i-1]) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    // 更新分箱表格
+    function updateBinningTable(data) {
+        const tableEl = document.getElementById('binningTable');
+        if (!tableEl) return;
+        
+        tableEl.innerHTML = `
+            <div style="overflow-x: auto;">
+                <table class="binning-detail-table">
+                    <thead>
+                        <tr>
+                            <th>分箱区间</th>
+                            <th>样本占比</th>
+                            <th>坏账率</th>
+                            <th>WOE值</th>
+                            <th>IV贡献</th>
+                            <th>说明</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.bins.map((bin, index) => {
+                            const ivContribution = bin.ivContribution || 0;
+                            const woeColor = bin.woe > 0 ? 'text-success' : 'text-danger';
+                            const woeIcon = bin.woe > 0 ? '↑' : '↓';
+                            
+                            return `
+                                <tr>
+                                    <td><strong>${bin.min}-${bin.max}</strong></td>
+                                    <td>${(bin.sampleRate * 100).toFixed(1)}%</td>
+                                    <td class="${bin.badRate > 0.1 ? 'text-danger' : bin.badRate > 0.05 ? 'text-warning' : 'text-success'}">
+                                        ${(bin.badRate * 100).toFixed(2)}%
+                                    </td>
+                                    <td class="${woeColor}">
+                                        ${woeIcon} ${bin.woe.toFixed(3)}
+                                    </td>
+                                    <td>${ivContribution.toFixed(4)}</td>
+                                    <td style="font-size: 11px; color: var(--text-tertiary);">
+                                        ${bin.woe > 0 ? '风险较低' : '风险较高'}
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
+    
+    // 初始化
+    drawChart();
+    createHandles();
+    updateBinningStats(data);
+    updateBinningTable(data);
+}
+
+/**
+ * 更改分箱特征
+ */
+function changeBinningFeature(feature) {
+    const features = {
+        age: { feature: '年龄', cutPoints: [18, 25, 30, 35, 40, 50, 70] },
+        income: { feature: '月收入', cutPoints: [0, 3000, 5000, 8000, 12000, 20000, 50000] },
+        entry_months: { feature: '入网时长', cutPoints: [0, 3, 6, 12, 24, 36, 60] },
+        loan_amount: { feature: '借款金额', cutPoints: [0, 5000, 10000, 20000, 50000, 100000, 500000] }
+    };
+    
+    if (state.binningData && features[feature]) {
+        state.binningData.feature = features[feature].feature;
+        state.binningData.cutPoints = [...features[feature].cutPoints];
+        state.binningData.bins = []; // 清空，让recalculateBinning重新生成
+        
+        // 先计算数据
+        const newBins = [];
+        for (let i = 0; i < state.binningData.cutPoints.length - 1; i++) {
+            const min = state.binningData.cutPoints[i];
+            const max = state.binningData.cutPoints[i + 1];
+            
+            // 根据特征类型模拟不同的坏账率分布
+            let baseBadRate;
+            if (feature === 'age') {
+                // 年龄：年龄越大，坏账率越低
+                const normalizedAge = (min + max) / 2;
+                baseBadRate = Math.max(0.03, 0.18 - (normalizedAge - 20) * 0.003);
+            } else if (feature === 'income') {
+                // 收入：收入越高，坏账率越低
+                const normalizedIncome = (min + max) / 2;
+                baseBadRate = Math.max(0.02, 0.15 - (normalizedIncome / 10000) * 0.01);
+            } else if (feature === 'entry_months') {
+                // 入网时长：入网时间越长，坏账率越低
+                const normalizedMonths = (min + max) / 2;
+                baseBadRate = Math.max(0.03, 0.16 - (normalizedMonths / 10) * 0.01);
+            } else if (feature === 'loan_amount') {
+                // 借款金额：金额越大，坏账率可能越高（风险更高）
+                const normalizedAmount = (min + max) / 2;
+                baseBadRate = Math.min(0.20, 0.05 + (normalizedAmount / 100000) * 0.05);
+            } else {
+                baseBadRate = 0.10;
+            }
+            
+            const badRate = Math.max(0.02, Math.min(0.20, baseBadRate + (Math.random() - 0.5) * 0.01));
+            
+            // 模拟样本占比
+            const centerValue = (state.binningData.cutPoints[0] + state.binningData.cutPoints[state.binningData.cutPoints.length - 1]) / 2;
+            const currentValue = (min + max) / 2;
+            const distanceFromCenter = Math.abs(currentValue - centerValue);
+            const maxDistance = Math.abs(state.binningData.cutPoints[state.binningData.cutPoints.length - 1] - state.binningData.cutPoints[0]) / 2;
+            const sampleRate = Math.max(0.05, 0.25 - (distanceFromCenter / maxDistance) * 0.15);
+            
+            newBins.push({
+                label: `${min}-${max}`,
+                min: min,
+                max: max,
+                badRate: badRate,
+                sampleRate: sampleRate,
+                goodRate: 1 - badRate,
+                goodCount: sampleRate * 10000 * (1 - badRate),
+                badCount: sampleRate * 10000 * badRate
+            });
+        }
+        
+        // 计算总体好坏客户数
+        const totalGood = newBins.reduce((sum, bin) => sum + bin.goodCount, 0);
+        const totalBad = newBins.reduce((sum, bin) => sum + bin.badCount, 0);
+        
+        // 计算WOE和IV
+        newBins.forEach(bin => {
+            const goodRatio = bin.goodCount / (bin.badCount || 0.0001);
+            const totalGoodRatio = totalGood / (totalBad || 0.0001);
+            bin.woe = Math.log(goodRatio / totalGoodRatio);
+            
+            const goodDist = bin.goodCount / (totalGood || 0.0001);
+            const badDist = bin.badCount / (totalBad || 0.0001);
+            bin.ivContribution = (goodDist - badDist) * bin.woe;
+        });
+        
+        state.binningData.bins = newBins;
+        
+        // 等待DOM更新后再重新初始化
+        setTimeout(() => {
+            initInteractiveBinning(state.binningData);
+        }, 50);
+    }
+}
+
+/**
+ * 更改分箱算法
+ */
+function changeBinningAlgorithm(algorithm) {
+    if (state.binningData) {
+        addMessage(`<p>🔄 已切换到${algorithm === 'chi2' ? '卡方分箱' : algorithm === 'tree' ? '决策树分箱' : '手动调整'}算法</p>`);
+        scrollToBottom();
+    }
+}
+
+/**
+ * 重置分箱
+ */
+function resetBinning() {
+    if (state.binningData) {
+        const defaultCutPoints = {
+            age: [18, 25, 30, 35, 40, 50, 70],
+            income: [0, 3000, 5000, 8000, 12000, 20000, 50000],
+            entry_months: [0, 3, 6, 12, 24, 36, 60],
+            loan_amount: [0, 5000, 10000, 20000, 50000, 100000, 500000]
+        };
+        
+        const featureSelect = document.getElementById('binningFeature');
+        const currentFeature = featureSelect ? featureSelect.value : 'age';
+        state.binningData.cutPoints = [...(defaultCutPoints[currentFeature] || defaultCutPoints.age)];
+        state.binningData.bins = []; // 清空，让recalculateBinning重新生成
+        
+        // 重新初始化分箱图表（会调用recalculateBinning）
+        initInteractiveBinning(state.binningData);
+        addMessage('<p>✅ 分箱已重置为默认值</p>');
+        scrollToBottom();
+    }
+}
+
+/**
+ * 应用分箱
+ */
+function applyBinning() {
+    if (state.binningData) {
+        const cutPoints = state.binningData.cutPoints.join(', ');
+        // 使用正确的IV计算公式
+        const totalIV = state.binningData.bins.reduce((sum, bin) => sum + (bin.ivContribution || 0), 0);
+        const isMonotonic = checkBinningMonotonicity(state.binningData);
+        
+        addMessage(`
+            <p>✅ <strong>分箱方案已应用</strong></p>
+            <p>切分点：${cutPoints}</p>
+            <p>分箱数量：${state.binningData.bins.length}</p>
+            <p>总IV值：${totalIV.toFixed(4)}</p>
+            <p>单调性：${isMonotonic ? '✓ 单调' : '⚠ 非单调'}</p>
+            <p style="margin-top: 12px;">💡 您可以将此分箱方案用于策略规则制定。</p>
+        `);
+        scrollToBottom();
+    }
+}
+
+/**
+ * 检查单调性（辅助函数）
+ */
+function checkBinningMonotonicity(data) {
+    if (!data || !data.bins) return false;
+    const badRates = data.bins.map(bin => bin.badRate);
+    for (let i = 1; i < badRates.length; i++) {
+        if (badRates[i] > badRates[i-1]) {
+            return false;
+        }
+    }
+    return true;
 }

@@ -1135,6 +1135,8 @@ body {
     overflow-x: hidden;
     padding: var(--spacing-xl);
     min-height: 0;
+    background: var(--bg-primary);
+    position: relative;
 }
 
 .canvas-view {
@@ -1344,6 +1346,7 @@ body {
     border-radius: var(--radius-lg);
     padding: var(--spacing-xl);
     overflow: visible;
+    min-height: 100%;
 }
 
 .chart-header {
@@ -1370,6 +1373,13 @@ body {
 .chart-canvas-wrapper {
     height: 400px;
     margin-bottom: var(--spacing-xl);
+}
+
+/* 当包含交互式分箱时，移除高度限制 */
+.chart-canvas-wrapper.binning-wrapper {
+    height: auto;
+    min-height: 400px;
+    margin-bottom: 0;
 }
 
 .chart-stats {
@@ -2034,4 +2044,257 @@ body {
 .ai-message-card.warning {
     background: rgba(245, 158, 11, 0.1);
     border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* 澄清建议样式 */
+.clarification-suggestions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.clarification-btn {
+    width: 100%;
+    text-align: left;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.clarification-btn:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* 交互式分箱样式 */
+.interactive-binning-container {
+    padding: var(--spacing-lg);
+    background: var(--bg-card);
+    min-height: 100%;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+    margin: 0;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+}
+
+/* 当使用交互式分箱时，chart-container需要调整 */
+.chart-container.binning-mode {
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    overflow: visible;
+}
+
+.binning-controls {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    flex-wrap: wrap;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.control-group label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.control-group select {
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition-base);
+}
+
+.control-group select:hover,
+.control-group select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.binning-chart-area {
+    position: relative;
+    margin-bottom: var(--spacing-lg);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-lg);
+}
+
+.binning-chart-wrapper {
+    position: relative;
+    width: 100%;
+    overflow-x: auto;
+    display: inline-block;
+}
+
+#binningCanvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.binning-handles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.binning-handle {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: var(--primary-color);
+    border: 2px solid white;
+    border-radius: 50%;
+    cursor: grab;
+    pointer-events: all;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.5);
+    transition: var(--transition-fast);
+    z-index: 10;
+}
+
+.binning-handle:hover {
+    transform: scale(1.2);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.7);
+}
+
+.binning-handle:active {
+    cursor: grabbing;
+}
+
+.binning-stats {
+    margin-bottom: var(--spacing-lg);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--spacing-md);
+}
+
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.stat-item {
+    padding: var(--spacing-md);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    text-align: center;
+    transition: var(--transition-base);
+}
+
+.stat-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-bottom: var(--spacing-xs);
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.stat-desc {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    margin-top: 4px;
+}
+
+.binning-table {
+    overflow-x: auto;
+    margin-top: var(--spacing-lg);
+}
+
+.binning-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.binning-detail-table thead {
+    background: var(--bg-tertiary);
+}
+
+.binning-detail-table th {
+    padding: 12px var(--spacing-md);
+    text-align: left;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.binning-detail-table td {
+    padding: 12px var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.binning-detail-table tbody tr {
+    transition: var(--transition-fast);
+}
+
+.binning-detail-table tbody tr:hover {
+    background: var(--bg-tertiary);
+}
+
+.binning-detail-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
+.text-success {
+    color: #10b981 !important;
+}
+
+.text-warning {
+    color: #f59e0b !important;
 }
