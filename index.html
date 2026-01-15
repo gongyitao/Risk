@@ -48,11 +48,11 @@
             <div class="hero-content">
                 <h2 class="hero-title">交互式风控智能策略分析平台</h2>
                 <p class="hero-description">基于大模型与智能体技术，实现自然语言交互、深度特征挖掘、安全合规的智能化风控分析</p>
-                <button class="btn-primary btn-large" onclick="goToWorkspace()">
-                    <span>开始分析</span>
+                <button class="btn-primary btn-large" onclick="showCreateProjectModal()">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
+                    <span>创建新项目</span>
                 </button>
             </div>
             <div class="hero-visual">
@@ -235,6 +235,64 @@
             <p class="footer-version">Version 1.1 (Beta)</p>
         </div>
     </footer>
+
+    <!-- 创建项目对话框 -->
+    <div class="modal" id="createProjectModal" style="display: none;">
+        <div class="modal-overlay" onclick="closeCreateProjectModal()"></div>
+        <div class="modal-content modal-medium">
+            <div class="modal-header">
+                <h2>创建新策略分析项目</h2>
+                <button class="modal-close" onclick="closeCreateProjectModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="createProjectForm" onsubmit="handleCreateProject(event)">
+                    <div class="form-group">
+                        <label for="projectName">项目名称 <span class="required">*</span></label>
+                        <input 
+                            type="text" 
+                            id="projectName" 
+                            name="projectName" 
+                            placeholder="例如：年轻用户风险拦截策略分析"
+                            required
+                            maxlength="50"
+                        >
+                        <div class="form-hint">简洁明了地描述这个分析项目的目标</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="projectDescription">项目描述</label>
+                        <textarea 
+                            id="projectDescription" 
+                            name="projectDescription" 
+                            rows="3"
+                            placeholder="简要描述这个分析的目标和范围，例如：针对18-24岁年轻用户群体的风险特征分析，通过策略规则拦截高风险客群"
+                            maxlength="200"
+                        ></textarea>
+                        <div class="form-hint">可选，但建议填写以便后续查看和管理</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="projectTags">标签（可选）</label>
+                        <div class="tags-input-container">
+                            <div class="tags-list" id="tagsList"></div>
+                            <input 
+                                type="text" 
+                                id="tagInput" 
+                                placeholder="输入标签后按回车添加"
+                                onkeydown="handleTagInput(event)"
+                            >
+                        </div>
+                        <div class="form-hint">添加标签便于分类和搜索，例如：年轻用户、风险拦截</div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeCreateProjectModal()">取消</button>
+                        <button type="submit" class="btn-primary">创建并开始分析</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script src="assets/js/main.js"></script>
 </body>

@@ -17,7 +17,33 @@
                 </svg>
                 返回
             </a>
-            <div class="workspace-title">智能工作台</div>
+            <div class="project-info" id="projectInfo">
+                <div class="project-info-main">
+                    <span class="project-icon">📊</span>
+                    <div class="project-details">
+                        <div class="project-name" id="projectName">未选择项目</div>
+                        <div class="project-meta" id="projectMeta">
+                            <span class="project-status" id="projectStatus">请创建新项目</span>
+                            <span class="project-separator">|</span>
+                            <span class="project-time" id="projectTime"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="project-actions">
+                    <button class="project-action-btn" onclick="showSwitchProjectMenu()" title="切换项目">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M2 8H14M10 4L14 8L10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        切换项目
+                    </button>
+                    <button class="project-action-btn" onclick="createNewProject()" title="创建新项目">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M8 4V12M4 8H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        </svg>
+                        新建
+                    </button>
+                </div>
+            </div>
             <a href="projects.html" class="icon-btn" title="项目管理" style="margin-left: var(--spacing-md);">
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                     <rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
@@ -514,6 +540,25 @@
             </div>
         </div>
     </main>
+
+    <!-- 切换项目下拉菜单 -->
+    <div class="dropdown-menu" id="switchProjectMenu" style="display: none;">
+        <div class="dropdown-header">
+            <span>选择项目</span>
+            <button class="dropdown-close" onclick="closeSwitchProjectMenu()">×</button>
+        </div>
+        <div class="dropdown-content" id="projectList">
+            <!-- 动态加载项目列表 -->
+        </div>
+        <div class="dropdown-footer">
+            <button class="btn-primary btn-small" onclick="createNewProject()">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 2V12M2 7H12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+                创建新项目
+            </button>
+        </div>
+    </div>
 
     <script src="assets/js/workspace.js"></script>
 </body>

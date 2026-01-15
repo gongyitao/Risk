@@ -7,8 +7,236 @@ const state = {
     currentModule: 'operation',
     currentView: 'welcome',
     conversationHistory: [],
-    chart: null
+    chart: null,
+    currentProject: null // 当前项目
 };
+
+// 页面加载时初始化项目
+document.addEventListener('DOMContentLoaded', function() {
+    // 从URL参数获取项目ID
+    const urlParams = new URLSearchParams(window.location.search);
+    const projectId = urlParams.get('projectId');
+    
+    if (projectId) {
+        loadProject(projectId);
+    } else {
+        // 如果没有项目ID，提示创建项目
+        showNoProjectWarning();
+    }
+});
+
+/**
+ * 加载项目
+ */
+function loadProject(projectId) {
+    const projects = getProjects();
+    const project = projects.find(p => p.id === projectId);
+    
+    if (project) {
+        state.currentProject = project;
+        updateProjectInfo(project);
+        // 加载项目数据
+        if (project.conversationHistory && project.conversationHistory.length > 0) {
+            state.conversationHistory = project.conversationHistory;
+            renderConversationHistory();
+        }
+    } else {
+        showNotification('项目不存在，将创建新项目', 'warning');
+        window.location.href = 'index.html';
+    }
+}
+
+/**
+ * 获取所有项目
+ */
+function getProjects() {
+    const projectsJson = localStorage.getItem('riskProjects');
+    return projectsJson ? JSON.parse(projectsJson) : [];
+}
+
+/**
+ * 保存当前项目
+ */
+function saveCurrentProject() {
+    if (!state.currentProject) return;
+    
+    // 更新项目数据
+    state.currentProject.conversationHistory = state.conversationHistory;
+    state.currentProject.updatedAt = new Date().toISOString();
+    state.currentProject.currentStep = state.currentModule;
+    
+    // 保存到localStorage
+    const projects = getProjects();
+    const index = projects.findIndex(p => p.id === state.currentProject.id);
+    if (index !== -1) {
+        projects[index] = state.currentProject;
+    } else {
+        projects.unshift(state.currentProject);
+    }
+    localStorage.setItem('riskProjects', JSON.stringify(projects));
+}
+
+/**
+ * 更新项目信息显示
+ */
+function updateProjectInfo(project) {
+    if (!project) return;
+    
+    const nameEl = document.getElementById('projectName');
+    const statusEl = document.getElementById('projectStatus');
+    const timeEl = document.getElementById('projectTime');
+    
+    if (nameEl) nameEl.textContent = project.name || '未命名项目';
+    
+    if (statusEl) {
+        const statusText = project.status === 'completed' ? '已完成' : 
+                         project.status === 'in-progress' ? '进行中' : '草稿';
+        const stepText = getStepText(project.currentStep);
+        statusEl.textContent = `${statusText} | ${stepText}`;
+    }
+    
+    if (timeEl) {
+        const date = new Date(project.updatedAt || project.createdAt);
+        timeEl.textContent = date.toLocaleDateString('zh-CN') + ' ' + 
+                            date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+    }
+}
+
+/**
+ * 获取步骤文本
+ */
+function getStepText(step) {
+    const stepMap = {
+        'operation': '数据助手',
+        'insight': '策略挖掘',
+        'reporting': '报告生成',
+        'knowledge': '知识库'
+    };
+    return stepMap[step] || '未开始';
+}
+
+/**
+ * 显示无项目警告
+ */
+function showNoProjectWarning() {
+    const projectInfo = document.getElementById('projectInfo');
+    if (projectInfo) {
+        const nameEl = document.getElementById('projectName');
+        if (nameEl) {
+            nameEl.textContent = '未选择项目';
+            nameEl.style.color = 'var(--text-tertiary)';
+        }
+    }
+    
+    // 可以添加一个提示消息
+    setTimeout(() => {
+        addMessage(`
+            <div class="ai-message-card warning">
+                <p>⚠️ <strong>未选择项目</strong></p>
+                <p>请先创建一个新项目或选择一个现有项目开始分析。</p>
+                <div class="message-actions">
+                    <button class="btn-primary btn-small" onclick="createNewProject()">创建新项目</button>
+                    <button class="btn-secondary btn-small" onclick="showSwitchProjectMenu()">选择项目</button>
+                </div>
+            </div>
+        `);
+        scrollToBottom();
+    }, 500);
+}
+
+/**
+ * 创建新项目
+ */
+function createNewProject() {
+    window.location.href = 'index.html';
+}
+
+/**
+ * 显示切换项目菜单
+ */
+function showSwitchProjectMenu() {
+    const menu = document.getElementById('switchProjectMenu');
+    if (!menu) return;
+    
+    const projects = getProjects();
+    const listEl = document.getElementById('projectList');
+    
+    if (projects.length === 0) {
+        listEl.innerHTML = `
+            <div class="empty-dropdown">
+                <p>还没有项目</p>
+                <button class="btn-primary btn-small" onclick="createNewProject()">创建新项目</button>
+            </div>
+        `;
+    } else {
+        listEl.innerHTML = projects.map(project => {
+            const date = new Date(project.updatedAt || project.createdAt);
+            const dateStr = date.toLocaleDateString('zh-CN') + ' ' + 
+                           date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+            const isActive = state.currentProject && state.currentProject.id === project.id;
+            
+            return `
+                <div class="dropdown-item ${isActive ? 'active' : ''}" onclick="switchToProject('${project.id}')">
+                    <div class="dropdown-item-header">
+                        <span class="dropdown-item-title">${escapeHtml(project.name)}</span>
+                        ${isActive ? '<span class="dropdown-item-badge">当前</span>' : ''}
+                    </div>
+                    <div class="dropdown-item-desc">${escapeHtml(project.description || '暂无描述')}</div>
+                    <div class="dropdown-item-meta">${dateStr}</div>
+                </div>
+            `;
+        }).join('');
+    }
+    
+    menu.style.display = 'block';
+}
+
+/**
+ * 关闭切换项目菜单
+ */
+function closeSwitchProjectMenu() {
+    const menu = document.getElementById('switchProjectMenu');
+    if (menu) menu.style.display = 'none';
+}
+
+/**
+ * 切换到指定项目
+ */
+function switchToProject(projectId) {
+    closeSwitchProjectMenu();
+    window.location.href = `workspace.html?projectId=${projectId}`;
+}
+
+/**
+ * 转义HTML
+ */
+function escapeHtml(text) {
+    if (!text) return '';
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+/**
+ * 渲染对话历史
+ */
+function renderConversationHistory() {
+    const messagesContainer = document.getElementById('chatMessages');
+    if (!messagesContainer) return;
+    
+    // 清空现有消息
+    messagesContainer.innerHTML = '';
+    
+    // 渲染历史消息
+    state.conversationHistory.forEach(msg => {
+        addMessage(msg.content, msg.type);
+    });
+}
 
 // 模拟数据库
 const mockData = {
@@ -426,6 +654,16 @@ function addMessage(content, type = 'system', options = {}) {
     messageDiv.appendChild(contentDiv);
     
     messagesContainer.appendChild(messageDiv);
+    
+    // 保存消息到对话历史
+    state.conversationHistory.push({
+        type: type,
+        content: content,
+        timestamp: new Date().toISOString()
+    });
+    
+    // 自动保存项目
+    saveCurrentProject();
     
     // 平滑滚动到底部
     scrollToBottom();
