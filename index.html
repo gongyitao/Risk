@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>策略E+ 智能化系统 - 智能风控策略分析平台</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="home-page">
+    <!-- 顶部导航栏 -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <path d="M16 2L28 8V16C28 23 22 28 16 30C10 28 4 23 4 16V8L16 2Z" fill="url(#gradient)" stroke="#00d4ff" stroke-width="2"/>
+                        <defs>
+                            <linearGradient id="gradient" x1="4" y1="2" x2="28" y2="30">
+                                <stop offset="0%" stop-color="#00d4ff"/>
+                                <stop offset="100%" stop-color="#7b2ff7"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>策略E+ <span class="version">智能化系统</span></h1>
+                    <p class="subtitle">AI-Powered Risk Strategy Platform</p>
+                </div>
+            </div>
+            <nav class="nav">
+                <a href="index.html" class="nav-link active">首页</a>
+                <a href="workspace.html" class="nav-link">工作台</a>
+                <a href="projects.html" class="nav-link">项目管理</a>
+                <a href="#" class="nav-link">知识库</a>
+                <a href="#" class="nav-link">帮助文档</a>
+            </nav>
+            <div class="user-info">
+                <div class="user-avatar">策</div>
+                <span>策略分析师</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主体内容 -->
+    <main class="main-content">
+        <!-- Hero区域 -->
+        <section class="hero">
+            <div class="hero-content">
+                <h2 class="hero-title">交互式风控智能策略分析平台</h2>
+                <p class="hero-description">基于大模型与智能体技术，实现自然语言交互、深度特征挖掘、安全合规的智能化风控分析</p>
+                <button class="btn-primary btn-large" onclick="goToWorkspace()">
+                    <span>开始分析</span>
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M7 4L13 10L7 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="hero-visual">
+                <div class="floating-card card-1">
+                    <div class="card-icon">📊</div>
+                    <div class="card-text">智能数据分析</div>
+                </div>
+                <div class="floating-card card-2">
+                    <div class="card-icon">🤖</div>
+                    <div class="card-text">AI策略挖掘</div>
+                </div>
+                <div class="floating-card card-3">
+                    <div class="card-icon">🔒</div>
+                    <div class="card-text">安全合规</div>
+                </div>
+                <div class="floating-card card-4">
+                    <div class="card-icon">📈</div>
+                    <div class="card-text">实时回测</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 四大智能模块 -->
+        <section class="modules">
+            <h3 class="section-title">四大智能模块</h3>
+            <div class="modules-grid">
+                <!-- 模块1：数据与脚本助手 -->
+                <div class="module-card" onclick="goToWorkspace('operation')">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                                <path d="M8 6H24M8 12H24M8 18H18M8 24H14" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="module-badge">Operation Agent</div>
+                    </div>
+                    <h4 class="module-title">数据与脚本助手</h4>
+                    <p class="module-desc">自然语言转SQL，智能数据提取与清洗，支持多表关联和时间窗口计算</p>
+                    <div class="module-features">
+                        <span class="feature-tag">Text-to-SQL</span>
+                        <span class="feature-tag">智能预检</span>
+                        <span class="feature-tag">沙箱机制</span>
+                    </div>
+                    <div class="module-stats">
+                        <div class="stat">
+                            <div class="stat-value">85%+</div>
+                            <div class="stat-label">代码可用率</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">30min</div>
+                            <div class="stat-label">平均耗时</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模块2：策略挖掘与分析助手 -->
+                <div class="module-card" onclick="goToWorkspace('insight')">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                                <circle cx="16" cy="16" r="6" stroke="white" stroke-width="2.5"/>
+                                <path d="M16 4V8M16 24V28M28 16H24M8 16H4M24 24L21 21M11 11L8 8M24 8L21 11M11 21L8 24" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="module-badge">Insight Agent</div>
+                    </div>
+                    <h4 class="module-title">策略挖掘与分析助手</h4>
+                    <p class="module-desc">自动化特征寻优，智能分箱与可视化，多维特征组合挖掘</p>
+                    <div class="module-features">
+                        <span class="feature-tag">特征寻优</span>
+                        <span class="feature-tag">智能分箱</span>
+                        <span class="feature-tag">交互调整</span>
+                    </div>
+                    <div class="module-stats">
+                        <div class="stat">
+                            <div class="stat-value">5%+</div>
+                            <div class="stat-label">坏账率降低</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">2pts</div>
+                            <div class="stat-label">KS值提升</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模块3：报告生成与解释助手 -->
+                <div class="module-card" onclick="goToWorkspace('reporting')">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                                <rect x="6" y="6" width="20" height="20" rx="2" stroke="white" stroke-width="2.5"/>
+                                <path d="M11 13H21M11 17H21M11 21H17" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="module-badge">Reporting Agent</div>
+                    </div>
+                    <h4 class="module-title">报告生成与解释助手</h4>
+                    <p class="module-desc">策略规则白话化，自动化回测报告，一键导出多格式文档</p>
+                    <div class="module-features">
+                        <span class="feature-tag">白话翻译</span>
+                        <span class="feature-tag">回测报告</span>
+                        <span class="feature-tag">换手分析</span>
+                    </div>
+                    <div class="module-stats">
+                        <div class="stat">
+                            <div class="stat-value">3种</div>
+                            <div class="stat-label">导出格式</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">&lt;5s</div>
+                            <div class="stat-label">生成速度</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 模块4：知识库与合规助手 -->
+                <div class="module-card" onclick="goToWorkspace('knowledge')">
+                    <div class="module-header">
+                        <div class="module-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                            <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                                <path d="M16 28C16 28 26 22 26 14V6L16 4L6 6V14C6 22 16 28 16 28Z" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M16 12V16M16 20H16.01" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="module-badge">Knowledge Agent</div>
+                    </div>
+                    <h4 class="module-title">知识库与合规助手</h4>
+                    <p class="module-desc">制度智能问答，实时合规检查，敏感字段自动拦截</p>
+                    <div class="module-features">
+                        <span class="feature-tag">智能问答</span>
+                        <span class="feature-tag">合规阻断</span>
+                        <span class="feature-tag">知识沉淀</span>
+                    </div>
+                    <div class="module-stats">
+                        <div class="stat">
+                            <div class="stat-value">100%</div>
+                            <div class="stat-label">合规拦截</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">&lt;3s</div>
+                            <div class="stat-label">响应时间</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 核心优势 -->
+        <section class="advantages">
+            <h3 class="section-title">核心优势</h3>
+            <div class="advantages-grid">
+                <div class="advantage-card">
+                    <div class="advantage-icon">💬</div>
+                    <h5>自然语言交互</h5>
+                    <p>支持中文直接对话，无需编写代码，降低使用门槛</p>
+                </div>
+                <div class="advantage-card">
+                    <div class="advantage-icon">🎯</div>
+                    <h5>深度智能挖掘</h5>
+                    <p>自动遍历变量组合，找到风险区分度最高的特征</p>
+                </div>
+                <div class="advantage-card">
+                    <div class="advantage-icon">🔐</div>
+                    <h5>安全合规保障</h5>
+                    <p>数据分级处理，敏感字段自动拦截，全程可追溯</p>
+                </div>
+                <div class="advantage-card">
+                    <div class="advantage-icon">⚡</div>
+                    <h5>效率大幅提升</h5>
+                    <p>取数时间从4小时降至30分钟，代码可用率85%+</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部 -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2026 策略E+ 智能化系统 | 风控策略部 × 平台开发部</p>
+            <p class="footer-version">Version 1.1 (Beta)</p>
+        </div>
+    </footer>
+
+    <script src="assets/js/main.js"></script>
+</body>
+</html>

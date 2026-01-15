@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分析项目管理 - 策略E+智能化系统</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/projects.css">
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <div class="navbar-brand">
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                    <circle cx="16" cy="16" r="14" stroke="url(#gradient)" stroke-width="2"/>
+                    <path d="M10 16L14 20L22 12" stroke="url(#gradient)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <defs>
+                        <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32">
+                            <stop offset="0%" stop-color="#667eea"/>
+                            <stop offset="100%" stop-color="#764ba2"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <span>策略E+ 智能化系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="index.html" class="navbar-item">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M2 7L9 2L16 7V15C16 15.5523 15.5523 16 15 16H3C2.44772 16 2 15.5523 2 15V7Z" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                    首页
+                </a>
+                <a href="workspace.html" class="navbar-item">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <rect x="2" y="2" width="14" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M6 6H12M6 9H12M6 12H9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    工作台
+                </a>
+                <a href="projects.html" class="navbar-item active">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <rect x="2" y="3" width="14" height="12" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M6 3V1M12 3V1M2 7H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    项目管理
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主容器 -->
+    <div class="projects-container">
+        <!-- 页面标题 -->
+        <div class="page-header">
+            <div class="page-header-left">
+                <h1>📊 分析项目管理</h1>
+                <p class="page-subtitle">查看、管理和复用您的历史分析项目</p>
+            </div>
+            <div class="page-header-right">
+                <button class="btn-secondary btn-medium" onclick="exportAllProjects()">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M2 12V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    批量导出
+                </button>
+                <button class="btn-primary btn-medium" onclick="window.location.href='workspace.html'">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 3V13M3 8H13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    新建分析
+                </button>
+            </div>
+        </div>
+
+        <!-- 筛选和搜索栏 -->
+        <div class="filter-bar">
+            <div class="filter-bar-left">
+                <div class="filter-group">
+                    <label>状态筛选：</label>
+                    <button class="filter-btn active" data-status="all" onclick="filterByStatus('all')">
+                        全部 <span class="filter-count">12</span>
+                    </button>
+                    <button class="filter-btn" data-status="completed" onclick="filterByStatus('completed')">
+                        已完成 <span class="filter-count">8</span>
+                    </button>
+                    <button class="filter-btn" data-status="in-progress" onclick="filterByStatus('in-progress')">
+                        进行中 <span class="filter-count">3</span>
+                    </button>
+                    <button class="filter-btn" data-status="draft" onclick="filterByStatus('draft')">
+                        草稿 <span class="filter-count">1</span>
+                    </button>
+                </div>
+                <div class="filter-group">
+                    <label>时间范围：</label>
+                    <select class="filter-select" onchange="filterByTime(this.value)">
+                        <option value="all">全部时间</option>
+                        <option value="today">今天</option>
+                        <option value="week">最近7天</option>
+                        <option value="month" selected>最近30天</option>
+                        <option value="quarter">最近90天</option>
+                    </select>
+                </div>
+            </div>
+            <div class="filter-bar-right">
+                <div class="search-box">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M11 11L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" placeholder="搜索项目名称、分析内容..." onkeyup="searchProjects(this.value)">
+                </div>
+                <button class="view-toggle-btn" onclick="toggleView('grid')" data-view="grid">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <rect x="2" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                        <rect x="11" y="2" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                        <rect x="2" y="11" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                        <rect x="11" y="11" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                    </svg>
+                </button>
+                <button class="view-toggle-btn active" onclick="toggleView('list')" data-view="list">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M2 4H16M2 9H16M2 14H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- 项目列表 -->
+        <div class="projects-list" id="projectsList">
+            <!-- 项目1：年轻用户风险拦截策略分析 -->
+            <div class="project-card" data-status="completed" data-id="proj-001">
+                <div class="project-card-header">
+                    <div class="project-status status-completed">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <circle cx="6" cy="6" r="5" fill="currentColor"/>
+                        </svg>
+                        已完成
+                    </div>
+                    <div class="project-actions">
+                        <button class="action-btn" onclick="openProject('proj-001')" title="打开项目">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M2 8C2 8 4 3 8 3C12 3 14 8 14 8C14 8 12 13 8 13C4 13 2 8 2 8Z" stroke="currentColor" stroke-width="1.5"/>
+                                <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn" onclick="exportProject('proj-001')" title="导出">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 12V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn" onclick="duplicateProject('proj-001')" title="复制">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <rect x="4" y="4" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M6 4V3C6 2.44772 6.44772 2 7 2H13C13.5523 2 14 2.44772 14 3V9C14 9.55228 13.5523 10 13 10H12" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn action-btn-danger" onclick="deleteProject('proj-001')" title="删除">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6 7V11M10 7V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                <path d="M4 4L5 13C5 13.5523 5.44772 14 6 14H10C10.5523 14 11 13.5523 11 13L12 4" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="project-card-body">
+                    <h3 class="project-title">年轻用户风险拦截策略分析</h3>
+                    <p class="project-description">
+                        针对18-24岁年轻用户群体的风险特征分析，通过策略规则拦截高风险客群，预计降低坏账率3.2个百分点。
+                    </p>
+                    <div class="project-meta">
+                        <div class="meta-item">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <circle cx="7" cy="4" r="2" stroke="currentColor" stroke-width="1.2"/>
+                                <path d="M2 12C2 9.79086 4.68629 8 7 8C9.31371 8 12 9.79086 12 12" stroke="currentColor" stroke-width="1.2"/>
+                            </svg>
+                            <span>策略分析师 - 张三</span>
+                        </div>
+                        <div class="meta-item">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <rect x="2" y="3" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                                <path d="M4 3V2M10 3V2M2 5H12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                            </svg>
+                            <span>2026-01-12 15:30</span>
+                        </div>
+                        <div class="meta-item">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M7 2V7L10 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
+                            </svg>
+                            <span>耗时 45分钟</span>
+                        </div>
+                    </div>
+                    <div class="project-tags">
+                        <span class="tag tag-blue">年轻用户</span>
+                        <span class="tag tag-red">风险拦截</span>
+                        <span class="tag tag-green">已上线</span>
+                    </div>
+                </div>
+                <div class="project-card-footer">
+                    <div class="project-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">样本量</span>
+                            <span class="stat-value">45,230</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">拦截率</span>
+                            <span class="stat-value">18.5%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">坏账率改善</span>
+                            <span class="stat-value text-success">-3.2pp</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">KS提升</span>
+                            <span class="stat-value text-success">+8.3%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 项目2：多头借贷客户识别策略 -->
+            <div class="project-card" data-status="completed" data-id="proj-002">
+                <div class="project-card-header">
+                    <div class="project-status status-completed">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <circle cx="6" cy="6" r="5" fill="currentColor"/>
+                        </svg>
+                        已完成
+                    </div>
+                    <div class="project-actions">
+                        <button class="action-btn" onclick="openProject('proj-002')" title="打开项目">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M2 8C2 8 4 3 8 3C12 3 14 8 14 8C14 8 12 13 8 13C4 13 2 8 2 8Z" stroke="currentColor" stroke-width="1.5"/>
+                                <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn" onclick="exportProject('proj-002')" title="导出">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 12V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn" onclick="duplicateProject('proj-002')" title="复制">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <rect x="4" y="4" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M6 4V3C6 2.44772 6.44772 2 7 2H13C13.5523 2 14 2.44772 14 3V9C14 9.55228 13.5523 10 13 10H12" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn action-btn-danger" onclick="deleteProject('proj-002')" title="删除">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6 7V11M10 7V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                <path d="M4 4L5 13C5 13.5523 5.44772 14 6 14H10C10.5523 14 11 13.5523 11 13L12 4" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="project-card-body">
+                    <h3 class="project-title">多头借贷客户识别策略</h3>
+                    <p class="project-description">
+                        基于外部征信数据和平台内行为特征，识别多头借贷高风险客户，建立智能拦截规则。
+                    </p>
+                    <div class="project-meta">
+                        <div class="meta-item">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <circle cx="7" cy="4" r="2" stroke="currentColor" stroke-width="1.2"/>
+                                <path d="M2 12C2 9.79086 4.68629 8 7 8C9.31371 8 12 9.79086 12 12" stroke="currentColor" stroke-width="1.2"/>
+                            </svg>
+                            <span>策略分析师 - 李四</span>
+                        </div>
+                        <div class="meta-item">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <rect x="2" y="3" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                                <path d="M4 3V2M10 3V2M2 5H12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                            </svg>
+                            <span>2026-01-10 10:15</span>
+                        </div>
+                        <div class="meta-item">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M7 2V7L10 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
+                            </svg>
+                            <span>耗时 38分钟</span>
+                        </div>
+                    </div>
+                    <div class="project-tags">
+                        <span class="tag tag-orange">多头借贷</span>
+                        <span class="tag tag-red">高风险</span>
+                        <span class="tag tag-yellow">待上线</span>
+                    </div>
+                </div>
+                <div class="project-card-footer">
+                    <div class="project-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">样本量</span>
+                            <span class="stat-value">32,145</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">识别准确率</span>
+                            <span class="stat-value">92.3%</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">坏账率改善</span>
+                            <span class="stat-value text-success">-5.1pp</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">KS提升</span>
+                            <span class="stat-value text-success">+12.5%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 项目3：低收入客群准入策略优化（进行中）-->
+            <div class="project-card" data-status="in-progress" data-id="proj-003">
+                <div class="project-card-header">
+                    <div class="project-status status-in-progress">
+                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                            <circle cx="6" cy="6" r="5" fill="currentColor"/>
+                        </svg>
+                        进行中
+                    </div>
+                    <div class="project-actions">
+                        <button class="action-btn" onclick="openProject('proj-003')" title="打开项目">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M2 8C2 8 4 3 8 3C12 3 14 8 14 8C14 8 12 13 8 13C4 13 2 8 2 8Z" stroke="currentColor" stroke-width="1.5"/>
+                                <circle cx="8" cy="8" r="2" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn" onclick="exportProject('proj-003')" title="导出">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 12V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn" onclick="duplicateProject('proj-003')" title="复制">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <rect x="4" y="4" width="8" height="8" rx="1" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M6 4V3C6 2.44772 6.44772 2 7 2H13C13.5523 2 14 2.44772 14 3V9C14 9.55228 13.5523 10 13 10H12" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                        </button>
+                        <button class="action-btn action-btn-danger" onclick="deleteProject('proj-003')" title="删除">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 4H13M5 4V3C5 2.44772 5.44772 2 6 2H10C10.5523 2 11 2.44772 11 3V4M6 7V11M10 7V11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                <path d="M4 4L5 13C5 13.5523 5.44772 14 6 14H10C10.5523 14 11 13.5523 11 13L12 4" stroke="currentColor" stroke-width="1.5"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="project-card-body">
+                    <h3 class="project-title">低收入客群准入策略优化</h3>
+                    <p class="project-description">
+                        针对月收入5000元以下客群的准入标准优化，平衡业务规模和风险控制，当前处于特征挖掘阶段。
+                    </p>
+                    <div class="project-meta">
+                        <div class="meta-item">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <circle cx="7" cy="4" r="2" stroke="currentColor" stroke-width="1.2"/>
+                                <path d="M2 12C2 9.79086 4.68629 8 7 8C9.31371 8 12 9.79086 12 12" stroke="currentColor" stroke-width="1.2"/>
+                            </svg>
+                            <span>策略分析师 - 王五</span>
+                        </div>
+                        <div class="meta-item">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <rect x="2" y="3" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                                <path d="M4 3V2M10 3V2M2 5H12" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+                            </svg>
+                            <span>2026-01-15 09:00</span>
+                        </div>
+                        <div class="meta-item">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                                <path d="M7 2V7L10 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.2"/>
+                            </svg>
+                            <span>进行中 25分钟</span>
+                        </div>
+                    </div>
+                    <div class="project-tags">
+                        <span class="tag tag-blue">低收入</span>
+                        <span class="tag tag-purple">准入优化</span>
+                    </div>
+                    <div class="project-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 60%"></div>
+                        </div>
+                        <span class="progress-text">数据助手 → 策略挖掘 (60%)</span>
+                    </div>
+                </div>
+                <div class="project-card-footer">
+                    <div class="project-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">样本量</span>
+                            <span class="stat-value">28,456</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">特征数</span>
+                            <span class="stat-value">15</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">当前步骤</span>
+                            <span class="stat-value text-info">特征挖掘</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">预计完成</span>
+                            <span class="stat-value">20分钟</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 更多项目可以继续添加... -->
+        </div>
+
+        <!-- 分页 -->
+        <div class="pagination">
+            <button class="pagination-btn" disabled>
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M9 3L4 7L9 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <button class="pagination-btn active">1</button>
+            <button class="pagination-btn">2</button>
+            <button class="pagination-btn">3</button>
+            <span class="pagination-dots">...</span>
+            <button class="pagination-btn">10</button>
+            <button class="pagination-btn">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M5 3L10 7L5 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- 项目详情弹窗 -->
+    <div class="modal" id="projectModal" style="display: none;">
+        <div class="modal-overlay" onclick="closeModal()"></div>
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="modalTitle">项目详情</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- 动态加载项目详情内容 -->
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/projects.js"></script>
+</body>
+</html>
